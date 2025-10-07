@@ -37,11 +37,14 @@ Edit `.env` and add your API key:
 ```env
 GOOGLE_GEMINI_API_KEY=your_actual_api_key_here
 MODEL_NAME=gemini-1.5-flash
+# CORS: Allow frontend at port 3000
 ALLOWED_ORIGINS=http://localhost:3000,http://localhost:3001
 LOG_LEVEL=info
+# Server binds to 0.0.0.0:3001 to work in preview/container environments
 PORT=3001
 HOST=0.0.0.0
 ```
+=======
 
 ### 3. Install Dependencies
 
@@ -73,6 +76,14 @@ python -m uvicorn app.main:app --host 0.0.0.0 --port 3001 --reload
 ```
 
 The server will start on `http://localhost:3001`
+
+## Port Configuration
+
+- **Backend**: Runs on port `3001` (http://localhost:3001)
+- **Frontend**: Expected to run on port `3000` (http://localhost:3000)
+- **Host Binding**: Server binds to `0.0.0.0` to accept connections in containerized/preview environments
+
+The backend is configured to accept CORS requests from `http://localhost:3000` (frontend) by default.
 
 ## API Documentation
 
