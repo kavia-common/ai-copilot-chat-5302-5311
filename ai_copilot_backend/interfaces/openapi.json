@@ -1,0 +1,344 @@
+{
+  "openapi": "3.1.0",
+  "info": {
+    "title": "AI Copilot Backend",
+    "description": "Backend API for AI Copilot chat application powered by Google Gemini",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3001",
+      "description": "Development server"
+    }
+  ],
+  "paths": {
+    "/healthz": {
+      "get": {
+        "tags": ["health"],
+        "summary": "Health Check",
+        "description": "Health check endpoint to verify the service is running",
+        "operationId": "health_check",
+        "responses": {
+          "200": {
+            "description": "Service is healthy",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "healthy"
+                    },
+                    "service": {
+                      "type": "string",
+                      "example": "ai-copilot-backend"
+                    },
+                    "version": {
+                      "type": "string",
+                      "example": "1.0.0"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sessions": {
+      "post": {
+        "tags": ["sessions"],
+        "summary": "Create New Session",
+        "description": "Creates a new chat session and returns the session ID",
+        "operationId": "create_session",
+        "responses": {
+          "201": {
+            "description": "Session created successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal server error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sessions/{session_id}": {
+      "get": {
+        "tags": ["sessions"],
+        "summary": "Get Session History",
+        "description": "Retrieves the conversation history for a specific session",
+        "operationId": "get_session",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The unique session identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session history retrieved",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "session_id": {
+                      "type": "string"
+                    },
+                    "messages": {
+                      "type": "array",
+                      "items": {
+                        "$ref": "#/components/schemas/Message"
+                      }
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/sessions/{session_id}/reset": {
+      "post": {
+        "tags": ["sessions"],
+        "summary": "Reset Session",
+        "description": "Clears all messages from a session while keeping the session active",
+        "operationId": "reset_session",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "The unique session identifier"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Session reset successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SessionResetResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/chat": {
+      "post": {
+        "tags": ["chat"],
+        "summary": "Send Chat Message",
+        "description": "Sends a user message to the AI and returns the response",
+        "operationId": "chat",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "AI response generated successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPError"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Error processing message",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPError"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Message": {
+        "type": "object",
+        "required": ["role", "content"],
+        "properties": {
+          "role": {
+            "type": "string",
+            "enum": ["user", "assistant"],
+            "description": "The role of the message sender"
+          },
+          "content": {
+            "type": "string",
+            "description": "The message content, supports markdown formatting"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the message was created"
+          }
+        }
+      },
+      "ChatRequest": {
+        "type": "object",
+        "required": ["session_id", "message"],
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Session ID for maintaining conversation context"
+          },
+          "message": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 10000,
+            "description": "User's message or prompt"
+          }
+        }
+      },
+      "ChatResponse": {
+        "type": "object",
+        "required": ["response", "session_id"],
+        "properties": {
+          "response": {
+            "type": "string",
+            "description": "AI-generated response in markdown format"
+          },
+          "session_id": {
+            "type": "string",
+            "description": "Session ID for this conversation"
+          }
+        }
+      },
+      "SessionResponse": {
+        "type": "object",
+        "required": ["session_id", "message"],
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "description": "Unique session identifier"
+          },
+          "message": {
+            "type": "string",
+            "default": "Session created successfully",
+            "description": "Status message"
+          },
+          "created_at": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Session creation timestamp"
+          }
+        }
+      },
+      "SessionResetResponse": {
+        "type": "object",
+        "required": ["session_id", "message"],
+        "properties": {
+          "session_id": {
+            "type": "string",
+            "description": "Session identifier"
+          },
+          "message": {
+            "type": "string",
+            "description": "Status message"
+          },
+          "status": {
+            "type": "string",
+            "default": "success",
+            "description": "Operation status"
+          }
+        }
+      },
+      "HTTPError": {
+        "type": "object",
+        "properties": {
+          "detail": {
+            "type": "string",
+            "description": "Error message"
+          }
+        }
+      }
+    }
+  },
+  "tags": [
+    {
+      "name": "health",
+      "description": "Health check endpoints"
+    },
+    {
+      "name": "sessions",
+      "description": "Session management operations"
+    },
+    {
+      "name": "chat",
+      "description": "Chat and conversation endpoints"
+    }
+  ]
+}
