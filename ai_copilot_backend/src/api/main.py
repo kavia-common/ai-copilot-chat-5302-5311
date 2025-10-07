@@ -34,7 +34,9 @@ app = FastAPI(
 )
 
 # Configure CORS
-cors_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000").split(",")
+# Parse CORS origins from environment variable, strip whitespace from each origin
+cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost:3000,https://vscode-internal-29933-beta.beta01.cloud.kavia.ai:3000")
+cors_origins = [origin.strip() for origin in cors_origins_str.split(",")]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=cors_origins,
