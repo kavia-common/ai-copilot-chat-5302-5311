@@ -102,6 +102,24 @@ def health_check():
 
 
 # PUBLIC_INTERFACE
+@app.get(
+    "/health",
+    tags=["health"],
+    summary="Health Check (Alternative)",
+    description="Alternative health check endpoint for compatibility.",
+    response_description="Health status message"
+)
+def health_check_alt():
+    """
+    Alternative health check endpoint.
+    
+    Returns:
+        dict: A message indicating the service is healthy.
+    """
+    return {"message": "Healthy", "service": "AI Copilot Chat API", "version": "1.0.0"}
+
+
+# PUBLIC_INTERFACE
 @app.post(
     "/api/chat",
     response_model=ChatResponse,
